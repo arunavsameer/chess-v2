@@ -23,8 +23,8 @@ int ascii_thsld = 95;
 class game
 {
     char arena[8][8][2];
-    list<piece> white;
-    list<piece> black;
+    vector<piece> white;
+    vector<piece> black;
     bool game_over = false;
 
 public:
@@ -96,7 +96,7 @@ public:
         return A;
     }
 
-    void reset_lists()
+    void reset_vectors()
     {
 
         white.clear();
@@ -157,11 +157,12 @@ public:
         }
     }
 
-    void put_pieces_from_lists()
+    void put_pieces_from_vectors()
     {
         for (auto Piece : white)
         {
-            if(Piece.position.first >= 0 && Piece.position.second >= 0){
+            if (Piece.position.first >= 0 && Piece.position.second >= 0)
+            {
                 arena[Piece.position.first][Piece.position.second][0] = Piece.name[0];
                 arena[Piece.position.first][Piece.position.second][1] = Piece.name[1];
             }
@@ -169,7 +170,8 @@ public:
 
         for (auto Piece : black)
         {
-            if(Piece.position.first >= 0 && Piece.position.second >= 0){
+            if (Piece.position.first >= 0 && Piece.position.second >= 0)
+            {
                 arena[Piece.position.first][Piece.position.second][0] = Piece.name[0];
                 arena[Piece.position.first][Piece.position.second][1] = Piece.name[1];
             }
@@ -216,50 +218,38 @@ public:
         }
     }
 
-    void print_board_list(bool chance)
+    void print_board_vector(bool chance)
     {
         reset_arena();
-        put_pieces_from_lists();
+        put_pieces_from_vectors();
         print_arena(chance);
     }
 
     piece *get_piece_at_position(pair<int, int> subject)
     {
-        char initial = arena[subject.first][subject.second][0];
-        piece *required;
+        for (auto &i : black)
+        {
+            if (i.position == subject)
+            {
+                return &(i);
+            }
+        }
 
-        if (initial == ' ' || initial == ':')
+        for (auto &i : white)
         {
-            required = nullptr;
-        }
-        else if (initial > ascii_thsld)
-        {
-            for (auto &i : black)
+            if (i.position == subject)
             {
-                if (i.position == subject)
-                {
-                    required = &(i);
-                }
+                return &(i);
             }
         }
-        else
-        {
-            for (auto &i : white)
-            {
-                if (i.position == subject)
-                {
-                    required = &(i);
-                }
-            }
-        }
-        return required;
+        return nullptr;
     }
 
-    list<piece *> find_threats(pair<int, int> subject, bool colour)
+    vector<piece *> find_threats(pair<int, int> subject, bool colour)
     {
-        list<piece *> threats;
+        vector<piece *> threats;
         bool enemy = !colour;
-
+        threats.clear();
         // along vertical
         for (int i = subject.first + 1; i < 8; i++)
         {
@@ -305,7 +295,6 @@ public:
                 }
             }
         }
-
         // along horizontal
         for (int j = subject.second + 1; j < 8; j++)
         {
@@ -378,18 +367,17 @@ public:
             }
             j++;
         };
-        dbg(1);
         j = subject.second - 1;
         for (int i = subject.first + 1; i < 8; i++)
         {
             if (get_piece_at_position(make_pair(i, j)) != nullptr && j >= 0)
             {
-                piece potential = *get_piece_at_position(make_pair(i, j));
-                if (potential.colour == enemy)
+                piece *potential = get_piece_at_position(make_pair(i, j));
+                if (potential->colour == enemy)
                 {
-                    if (potential.type == 'b' || potential.type == 'q')
+                    if (potential->type == 'b' || potential->type == 'q')
                     {
-                        threats.push_back(get_piece_at_position(make_pair(i, j)));
+                        threats.push_back(potential);
                     }
                     else
                     {
@@ -403,7 +391,6 @@ public:
             }
             j--;
         }
-        dbg(2);
         j = subject.second + 1;
         for (int i = subject.first - 1; i >= 0; i--)
         {
@@ -428,10 +415,9 @@ public:
             }
             j++;
         };
-        dbg(3);
         j = subject.second - 1;
         for (int i = subject.first - 1; i >= 0; i--)
-        {            
+        {
             if (get_piece_at_position(make_pair(i, j)) != nullptr && j >= 0)
             {
                 piece potential = *get_piece_at_position(make_pair(i, j));
@@ -453,7 +439,6 @@ public:
             }
             j--;
         }
-        dbg(4);
         // knights
         if (subject.first + 2 < 8 && subject.second + 1 < 8)
         {
@@ -567,59 +552,69 @@ public:
                 }
             }
         }
-
         // pawn
         if (colour == 0 && subject.first - 1 >= 0)
         {
-            if (get_piece_at_position(make_pair(subject.first - 1, subject.second + 1)) != nullptr)
+            if (subject.second + 1 < 8)
             {
-                piece potential = *get_piece_at_position(make_pair(subject.first - 1, subject.second + 1));
-                if (potential.colour == enemy)
+                piece *potential = get_piece_at_position(make_pair(subject.first - 1, subject.second + 1));
+                if (potential != nullptr)
                 {
-                    if (potential.type == 'p')
+                    if (potential->colour == enemy)
                     {
-                        threats.push_back(get_piece_at_position(make_pair(subject.first - 1, subject.second + 1)));
+                        if (potential->type == 'p')
+                        {
+                            threats.push_back(potential);
+                        }
                     }
                 }
             }
-            if (get_piece_at_position(make_pair(subject.first - 1, subject.second - 1)) != nullptr)
+            if (subject.second - 1 >= 0)
             {
-                piece potential = *get_piece_at_position(make_pair(subject.first - 1, subject.second - 1));
-                if (potential.colour == enemy)
+                piece *potential = get_piece_at_position(make_pair(subject.first - 1, subject.second - 1));
+                if (potential != nullptr)
                 {
-                    if (potential.type == 'p')
+                    if (potential->colour == enemy)
                     {
-                        threats.push_back(get_piece_at_position(make_pair(subject.first - 1, subject.second - 1)));
+                        if (potential->type == 'p')
+                        {
+                            threats.push_back(potential);
+                        }
                     }
                 }
             }
         }
         else if (colour == 1 && subject.first + 1 < 8)
         {
-            if (get_piece_at_position(make_pair(subject.first + 1, subject.second + 1)) != nullptr)
+            if (subject.second + 1 < 8)
             {
-                piece potential = *get_piece_at_position(make_pair(subject.first + 1, subject.second + 1));
-                if (potential.colour == enemy)
+                piece *potential = get_piece_at_position(make_pair(subject.first + 1, subject.second + 1));
+                if (potential != nullptr)
                 {
-                    if (potential.type == 'p')
+                    if (potential->colour == enemy)
                     {
-                        threats.push_back(get_piece_at_position(make_pair(subject.first + 1, subject.second + 1)));
+                        if (potential->type == 'p')
+                        {
+                            threats.push_back(potential);
+                        }
                     }
                 }
             }
-            if (get_piece_at_position(make_pair(subject.first + 1, subject.second - 1)) != nullptr)
+            if (subject.second - 1 >= 0)
             {
-                piece potential = *get_piece_at_position(make_pair(subject.first + 1, subject.second - 1));
-                if (potential.colour == enemy)
+                piece *potential = get_piece_at_position(make_pair(subject.first + 1, subject.second - 1));
+                if (potential != nullptr)
                 {
-                    if (potential.type == 'p')
+                    if (potential->colour == enemy)
                     {
-                        threats.push_back(get_piece_at_position(make_pair(subject.first + 1, subject.second - 1)));
+                        if (potential->type == 'p')
+                        {
+                            threats.push_back(potential);
+                        }
                     }
                 }
             }
         }
-
         // king
         for (int i = subject.first - 1; i <= subject.first + 1; i++)
         {
@@ -673,13 +668,13 @@ public:
 
     void make_move(chance c, bool colour)
     {
-        c.to_move->position = c.final;
         piece *taken = get_piece_at_position(c.final);
+        c.to_move->position = c.final;
+        c.to_move->is_moved = true;
         if (taken != nullptr)
         {
             kill(taken);
         }
-        print_board_list(colour);
     }
 
     void kill(piece *taken)
@@ -696,6 +691,7 @@ public:
 
     bool check_after_put(chance c, bool turn)
     {
+        // dbg(0);
         bool is_valid = false;
         piece kg_temp = *find_king(turn);
         piece *taken = get_piece_at_position(c.final);
@@ -707,14 +703,21 @@ public:
         {
             taken->position = make_pair(-3, -3);
             c.to_move->position = c.final;
-            if (find_threats(kg_temp.position, turn).size() == 0)
-            {
-                is_valid = true;
-            }
+        }
+        if (c.to_move->type == 'k')
+        {
+            kg_temp = *find_king(turn);
+        }
+        // print_board_vector(turn);
+        if (find_threats(kg_temp.position, turn).size() == 0)
+        {
+            is_valid = true;
         }
         c.to_move->position = c.initial;
-        taken->position = c.final;
-
+        if (taken != nullptr)
+        {
+            taken->position = c.final;
+        }
         return is_valid;
     }
 
@@ -730,7 +733,6 @@ public:
             return nullptr;
         }
         piece *subject = nullptr;
-
         string piece_name = "";
         piece_name += input[0];
         piece_name += input[1];
@@ -758,19 +760,29 @@ public:
         {
             return nullptr;
         }
-        
+
         if (tolower(input[2]) < 97 || tolower(input[2]) > 104)
         {
             return nullptr;
         }
+
         if (input[3] < 49 || input[3] > 56)
         {
             return nullptr;
         }
         pair<int, int> posn;
         posn.first = input[3] - 49;
-        posn.second = tolower(104 - input[2]);
-        list<piece *> threats = find_threats(posn, !colour);
+        posn.second = (104 - input[2]);
+        cout << posn.first << " " << posn.second << endl;
+        piece *taken = get_piece_at_position(posn);
+        if (taken != nullptr)
+        {
+            if (taken->colour == colour)
+            {
+                return nullptr;
+            }
+        }
+        vector<piece *> threats = find_threats(posn, !colour);
         bool can_go = false;
         for (auto i : threats)
         {
@@ -787,14 +799,40 @@ public:
                 break;
             }
         }
-        if(subject->type == 'p' && !can_go){
-            if(colour){
-                if(subject->position.first + 1 == posn.first && subject->position.second == posn.second){
-                    can_go = true;
+        if (subject->type == 'p' && !can_go)
+        {
+            if (colour)
+            {
+                if (subject->position.first + 1 == posn.first && subject->position.second == posn.second)
+                {
+                    if (get_piece_at_position(make_pair(subject->position.first + 1, subject->position.second)) == nullptr)
+                    {
+                        can_go = true;
+                    }
                 }
-            }else{
-                if(subject->position.first - 1 == posn.first && subject->position.second == posn.second){
-                    can_go = true;
+                else if (subject->position.first + 2 == posn.first && subject->position.second == posn.second && !subject->is_moved)
+                {
+                    if (get_piece_at_position(make_pair(subject->position.first + 2, subject->position.second)) == nullptr)
+                    {
+                        can_go = true;
+                    }
+                }
+            }
+            else
+            {
+                if (subject->position.first - 1 == posn.first && subject->position.second == posn.second)
+                {
+                    if (get_piece_at_position(make_pair(subject->position.first - 1, subject->position.second)) == nullptr)
+                    {
+                        can_go = true;
+                    }
+                }
+                else if (subject->position.first - 2 == posn.first && subject->position.second == posn.second && !subject->is_moved)
+                {
+                    if (get_piece_at_position(make_pair(subject->position.first - 2, subject->position.second)) == nullptr)
+                    {
+                        can_go = true;
+                    }
                 }
             }
         }
@@ -818,14 +856,129 @@ public:
         return A;
     }
 
+    vector<chance> possible_moves(bool colour)
+    {
+        vector<chance> possible;
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                pair<int, int> posn = make_pair(i, j);
+                vector<piece *> threats = find_threats(posn, !colour);
+                for (auto i : threats)
+                {
+                    if (get_piece_at_position(posn) != nullptr && get_piece_at_position(posn)->colour != colour)
+                    {
+                        chance A;
+                        A.to_move = i;
+                        A.final = posn;
+                        A.initial = i->position;
+                        possible.push_back(A);
+                    }
+                    else if (get_piece_at_position(posn) == nullptr)
+                    {
+                        if (i->type != 'p')
+                        {
+                            chance A;
+                            A.to_move = i;
+                            A.final = posn;
+                            A.initial = i->position;
+                            possible.push_back(A);
+                        }
+                    }
+                }
+            }
+        }
+        if (colour)
+        {
+            for (auto &i : white)
+            {
+                if (i.type == 'p')
+                {
+                    if (i.position.first + 1 < 8)
+                    {
+                        if (get_piece_at_position(make_pair(i.position.first + 1, i.position.second)) == nullptr)
+                        {
+                            chance A;
+                            A.to_move = &i;
+                            A.initial = i.position;
+                            A.final = make_pair(i.position.first + 1, i.position.second);
+                            possible.push_back(A);
+                        }
+                    }
+                    if (i.position.first + 2 < 8)
+                    {
+                        if (get_piece_at_position(make_pair(i.position.first + 1, i.position.second)) == nullptr && get_piece_at_position(make_pair(i.position.first + 2, i.position.second)) == nullptr && !i.is_moved)
+                        {
+                            chance A;
+                            A.to_move = &i;
+                            A.initial = i.position;
+                            A.final = make_pair(i.position.first + 2, i.position.second);
+                            possible.push_back(A);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (auto &i : black)
+            {
+                if (i.type == 'p')
+                {
+                    if (i.position.first - 1 >= 0)
+                    {
+                        if (get_piece_at_position(make_pair(i.position.first - 1, i.position.second)) == nullptr)
+                        {
+                            chance A;
+                            A.to_move = &i;
+                            A.initial = i.position;
+                            A.final = make_pair(i.position.first - 1, i.position.second);
+                            possible.push_back(A);
+                        }
+                    }
+                    if (i.position.first - 2 >= 0)
+                    {
+                        if (get_piece_at_position(make_pair(i.position.first - 1, i.position.second)) == nullptr && get_piece_at_position(make_pair(i.position.first - 2, i.position.second)) == nullptr && !i.is_moved)
+                        {
+                            chance A;
+                            A.to_move = &i;
+                            A.initial = i.position;
+                            A.final = make_pair(i.position.first - 2, i.position.second);
+                            possible.push_back(A);
+                        }
+                    }
+                }
+            }
+        }
+        for (auto it = possible.begin(); it != possible.end();)
+        {
+            if (!check_after_put(*it, colour))
+            {
+                it = possible.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+        return possible;
+    }
+
     void play_game()
     {
         int turn = 1;
-        
+
         do
         {
             bool colour = turn % 2;
-            print_board_list(colour);
+            print_board_vector(colour);
+            vector<chance> possible = possible_moves(colour);
+            // for (auto i : possible)
+            // {
+            //     cout << i.to_move->name << " " << i.final.first << " " << i.final.second << endl;
+            // }
+            // cout << endl;
             if (colour)
             {
                 cout << "WHITE MOVE: ";
@@ -836,12 +989,19 @@ public:
             }
             string input;
             cin >> input;
-            if (validate_input(input, colour) != nullptr)
+            piece *moving = validate_input(input, colour);
+            // system("cls");
+            if (moving != nullptr)
             {
-                // cout << validate_input(input, colour)->name << endl;
-                chance A = convert_input_to_chance(validate_input(input, colour), input, turn);
-                make_move(A, colour);
-                turn++;
+                chance A = convert_input_to_chance(moving, input, turn);
+                for (auto &i : possible)
+                {
+                    if (i.to_move == A.to_move && i.final == A.final && i.initial == A.initial)
+                    {
+                        make_move(A, colour);
+                        turn++;
+                    }
+                }
             }
         } while (!game_over);
     }
@@ -850,6 +1010,6 @@ public:
 int main()
 {
     game chess;
-    chess.reset_lists();
+    chess.reset_vectors();
     chess.play_game();
 }
