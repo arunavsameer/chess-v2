@@ -974,6 +974,19 @@ public:
             bool colour = turn % 2;
             print_board_vector(colour);
             vector<chance> possible = possible_moves(colour);
+            if (possible.size() == 0)
+            {
+                vector<piece *> kg_threats = find_threats(find_king(colour)->position, colour);
+                if (kg_threats.size() == 0)
+                {
+                    cout << "STALEMATE" << endl;
+                }
+                else
+                {
+                    cout << "CHECKMATE" << endl;
+                }
+                break;
+            }
             // for (auto i : possible)
             // {
             //     cout << i.to_move->name << " " << i.final.first << " " << i.final.second << endl;
