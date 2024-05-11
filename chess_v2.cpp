@@ -773,13 +773,87 @@ public:
         pair<int, int> posn;
         posn.first = input[3] - 49;
         posn.second = (104 - input[2]);
-        cout << posn.first << " " << posn.second << endl;
         piece *taken = get_piece_at_position(posn);
         if (taken != nullptr)
         {
             if (taken->colour == colour)
             {
                 return nullptr;
+            }
+        }
+        // castling
+        if (subject->type == 'k' && !subject->is_moved)
+        {
+            int delta = subject->position.second - posn.second;
+            // king side castle
+            if (subject->position.first == posn.first && delta == 2)
+            {
+                int kg_file;
+                if (colour)
+                {
+                    kg_file = 0;
+                }
+                else
+                {
+                    kg_file = 7;
+                }
+                piece *is_rook = get_piece_at_position(make_pair(kg_file, 0));
+                if (is_rook != nullptr)
+                {
+                    if (is_rook->type == 'r' && !is_rook->is_moved)
+                    {
+                        if (get_piece_at_position(make_pair(kg_file, 1)) == nullptr && get_piece_at_position(make_pair(kg_file, 2)) == nullptr)
+                        {
+                            vector<piece *> threat1 = find_threats(make_pair(kg_file, 1), colour);
+                            vector<piece *> threat2 = find_threats(make_pair(kg_file, 2), colour);
+                            vector<piece *> threat3 = find_threats(make_pair(kg_file, 3), colour);
+                            if (threat1.size() == 0 && threat2.size() == 0 && threat3.size() == 0)
+                            {
+                                chance A;
+                                A.to_move = is_rook;
+                                A.initial = make_pair(0, 0);
+                                A.final = make_pair(0, 2);
+                                make_move(A, colour);
+                                return subject;
+                            }
+                        }
+                    }
+                }
+            }
+            // queen side castle
+            else if (subject->position.first == posn.first && delta == -2)
+            {
+                int kg_file;
+                if (colour)
+                {
+                    kg_file = 0;
+                }
+                else
+                {
+                    kg_file = 7;
+                }
+                piece *is_rook = get_piece_at_position(make_pair(kg_file, 7));
+                if (is_rook != nullptr)
+                {
+                    if (is_rook->type == 'r' && !is_rook->is_moved)
+                    {
+                        if (get_piece_at_position(make_pair(kg_file, 4)) == nullptr && get_piece_at_position(make_pair(kg_file, 5)) == nullptr && get_piece_at_position(make_pair(kg_file, 5)) == nullptr)
+                        {
+                            vector<piece *> threat1 = find_threats(make_pair(kg_file, 3), colour);
+                            vector<piece *> threat2 = find_threats(make_pair(kg_file, 4), colour);
+                            vector<piece *> threat3 = find_threats(make_pair(kg_file, 5), colour);
+                            if (threat1.size() == 0 && threat2.size() == 0 && threat3.size() == 0)
+                            {
+                                chance A;
+                                A.to_move = is_rook;
+                                A.initial = make_pair(kg_file, 7);
+                                A.final = make_pair(kg_file, 4);
+                                make_move(A, colour);
+                                return subject;
+                            }
+                        }
+                    }
+                }
             }
         }
         vector<piece *> threats = find_threats(posn, !colour);
@@ -962,6 +1036,63 @@ public:
                 it++;
             }
         }
+
+        // castling king side
+        int kg_rank;
+        if (colour)
+        {
+            kg_rank = 0;
+        }
+        else
+        {
+            kg_rank = 7;
+        }
+        piece *kg_temp = find_king(colour);
+        if (!kg_temp->is_moved)
+        {
+            piece *is_rook_k = get_piece_at_position(make_pair(kg_rank, 0));
+            piece *is_rook_q = get_piece_at_position(make_pair(kg_rank, 7));
+            if (is_rook_k != nullptr)
+            {
+                if (is_rook_k->type == 'r' && !is_rook_k->is_moved)
+                {
+                    if (get_piece_at_position(make_pair(kg_rank, 1)) == nullptr && get_piece_at_position(make_pair(kg_rank, 2)) == nullptr)
+                    {
+                        vector<piece *> threat1 = find_threats(make_pair(kg_rank, 1), colour);
+                        vector<piece *> threat2 = find_threats(make_pair(kg_rank, 2), colour);
+                        vector<piece *> threat3 = find_threats(make_pair(kg_rank, 3), colour);
+                        if (threat1.size() == 0 && threat2.size() == 0 && threat3.size() == 0)
+                        {
+                            chance A;
+                            A.to_move = kg_temp;
+                            A.initial = kg_temp->position;
+                            A.final = make_pair(kg_rank, 1);
+                            possible.push_back(A);
+                        }
+                    }
+                }
+            }
+            if (is_rook_q != nullptr)
+            {
+                if (is_rook_q->type == 'r' && !is_rook_q->is_moved)
+                {
+                    if (get_piece_at_position(make_pair(kg_rank, 4)) == nullptr && get_piece_at_position(make_pair(kg_rank, 5)) == nullptr && get_piece_at_position(make_pair(kg_rank, 6)) == nullptr)
+                    {
+                        vector<piece *> threat1 = find_threats(make_pair(kg_rank, 3), colour);
+                        vector<piece *> threat2 = find_threats(make_pair(kg_rank, 4), colour);
+                        vector<piece *> threat3 = find_threats(make_pair(kg_rank, 5), colour);
+                        if (threat1.size() == 0 && threat2.size() == 0 && threat3.size() == 0)
+                        {
+                            chance A;
+                            A.to_move = kg_temp;
+                            A.initial = kg_temp->position;
+                            A.final = make_pair(kg_rank, 5);
+                            possible.push_back(A);
+                        }
+                    }
+                }
+            }
+        }
         return possible;
     }
 
@@ -1013,6 +1144,7 @@ public:
                     {
                         make_move(A, colour);
                         turn++;
+                        break;
                     }
                 }
             }
