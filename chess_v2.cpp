@@ -917,7 +917,7 @@ public:
         return subject;
     }
 
-    chance convert_input_to_chance(piece *subject, string &input, bool colour)
+    chance convert_input_to_chance(piece *subject, string &input)
     {
         chance A;
         A.to_move = subject;
@@ -1105,9 +1105,9 @@ public:
             bool colour = turn % 2;
             print_board_vector(colour);
             vector<chance> possible = possible_moves(colour);
+            vector<piece *> kg_threats = find_threats(find_king(colour)->position, colour);
             if (possible.size() == 0)
             {
-                vector<piece *> kg_threats = find_threats(find_king(colour)->position, colour);
                 if (kg_threats.size() == 0)
                 {
                     cout << "STALEMATE" << endl;
@@ -1117,6 +1117,10 @@ public:
                     cout << "CHECKMATE" << endl;
                 }
                 break;
+            }
+            else if (kg_threats.size() != 0)
+            {
+                cout << "CHECK" << endl;
             }
             // for (auto i : possible)
             // {
@@ -1134,20 +1138,106 @@ public:
             string input;
             cin >> input;
             piece *moving = validate_input(input, colour);
-            // system("cls");
+
             if (moving != nullptr)
             {
-                chance A = convert_input_to_chance(moving, input, turn);
+                chance A = convert_input_to_chance(moving, input);
                 for (auto &i : possible)
                 {
                     if (i.to_move == A.to_move && i.final == A.final && i.initial == A.initial)
                     {
+                        if (i.to_move->type == 'p' && (i.final.first == 7 || i.final.first == 0))
+                        {
+                            // promotion
+                            cout << "choose piece:\n(q)ueen\n(r)ook\n(k)night\n(b)ishop\n";
+                            char choice;
+                            cin >> choice;
+                            char first = choice;
+                            char second = 48 + i.to_move->name[1];
+                            if (colour)
+                            {
+                                first = choice - 32;
+                            }
+                            string name = "";
+                            name += first;
+                            name += second;
+                            if (choice == 'q')
+                            {
+                                if (get_piece_at_position(i.final) != nullptr)
+                                {
+                                    kill(get_piece_at_position(i.final));
+                                }
+                                kill(moving);
+                                if (colour)
+                                {
+                                    white.push_back(queen(name, i.final, 1));
+                                }
+                                else
+                                {
+                                    black.push_back(queen(name, i.final, 1));
+                                }
+                                turn++;
+                            }
+                            else if (choice == 'r')
+                            {
+                                if (get_piece_at_position(i.final) != nullptr)
+                                {
+                                    kill(get_piece_at_position(i.final));
+                                }
+                                kill(moving);
+                                if (colour)
+                                {
+                                    white.push_back(rook(name, i.final, 1));
+                                }
+                                else
+                                {
+                                    black.push_back(rook(name, i.final, 1));
+                                }
+                                turn++;
+                            }
+                            else if (choice == 'k')
+                            {
+                                if (get_piece_at_position(i.final) != nullptr)
+                                {
+                                    kill(get_piece_at_position(i.final));
+                                }
+                                kill(moving);
+                                if (colour)
+                                {
+                                    white.push_back(knight(name, i.final, 1));
+                                }
+                                else
+                                {
+                                    black.push_back(knight(name, i.final, 1));
+                                }
+                                turn++;
+                            }
+                            else if (choice == 'b')
+                            {
+                                if (get_piece_at_position(i.final) != nullptr)
+                                {
+                                    kill(get_piece_at_position(i.final));
+                                }
+                                kill(moving);
+                                if (colour)
+                                {
+                                    white.push_back(knight(name, i.final, 1));
+                                }
+                                else
+                                {
+                                    black.push_back(knight(name, i.final, 1));
+                                }
+                                turn++;
+                            }
+                            continue;
+                        }
                         make_move(A, colour);
                         turn++;
                         break;
                     }
                 }
             }
+            system("cls");
         } while (!game_over);
     }
 };
