@@ -1108,6 +1108,8 @@ public:
             vector<piece *> kg_threats = find_threats(find_king(colour)->position, colour);
             if (possible.size() == 0)
             {
+                game_over = true;
+
                 if (kg_threats.size() == 0)
                 {
                     cout << "STALEMATE" << endl;
@@ -1174,7 +1176,7 @@ public:
                                 }
                                 else
                                 {
-                                    black.push_back(queen(name, i.final, 1));
+                                    black.push_back(queen(name, i.final, 0));
                                 }
                                 turn++;
                             }
@@ -1191,7 +1193,7 @@ public:
                                 }
                                 else
                                 {
-                                    black.push_back(rook(name, i.final, 1));
+                                    black.push_back(rook(name, i.final, 0));
                                 }
                                 turn++;
                             }
@@ -1208,7 +1210,7 @@ public:
                                 }
                                 else
                                 {
-                                    black.push_back(knight(name, i.final, 1));
+                                    black.push_back(knight(name, i.final, 0));
                                 }
                                 turn++;
                             }
@@ -1225,7 +1227,7 @@ public:
                                 }
                                 else
                                 {
-                                    black.push_back(knight(name, i.final, 1));
+                                    black.push_back(knight(name, i.final, 0));
                                 }
                                 turn++;
                             }
