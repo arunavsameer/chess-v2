@@ -135,6 +135,7 @@ public:
         white.push_back(pawn("P6", make_pair(1, 2), 1));
         white.push_back(pawn("P7", make_pair(1, 1), 1));
         white.push_back(pawn("P8", make_pair(1, 0), 1));
+        
     }
 
     void reset_arena()
