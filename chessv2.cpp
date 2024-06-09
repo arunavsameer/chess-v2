@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <fstream>
 using namespace std;
 
 struct piece
@@ -135,7 +136,6 @@ public:
         white.push_back(pawn("P6", make_pair(1, 2), 1));
         white.push_back(pawn("P7", make_pair(1, 1), 1));
         white.push_back(pawn("P8", make_pair(1, 0), 1));
-        
     }
 
     void reset_arena()
@@ -1097,10 +1097,126 @@ public:
         return possible;
     }
 
-    void play_game()
+    void save_history(string input)
     {
-        int turn = 1;
+        fstream file;
+        file.open("history.txt", ios_base::app);
+        if (file.is_open())
+        {
+            file << input << endl;
+        }
+        file.close();
+    }
 
+    int redo_history()
+    {
+        reset_vectors();
+        int turn = 1;
+        bool colour = turn % 2;
+        ifstream file;
+        string line;
+        file.open("history.txt");
+        while (getline(file, line))
+        {
+            bool colour = turn % 2;
+            piece *moving = validate_input(line, colour);
+
+            if (moving != nullptr)
+            {
+                chance A = convert_input_to_chance(moving, line);
+
+                if (A.to_move->type == 'p' && (A.final.first == 7 || A.final.first == 0))
+                {
+                    // promotion
+                    char choice = line[4];
+                    char first = choice;
+                    char second = 48 + A.to_move->name[1];
+                    if (colour)
+                    {
+                        first = choice - 32;
+                    }
+                    string name = "";
+                    name += first;
+                    name += second;
+                    if (choice == 'q')
+                    {
+                        if (get_piece_at_position(A.final) != nullptr)
+                        {
+                            kill(get_piece_at_position(A.final));
+                        }
+                        kill(moving);
+                        if (colour)
+                        {
+                            white.push_back(queen(name, A.final, 1));
+                        }
+                        else
+                        {
+                            black.push_back(queen(name, A.final, 0));
+                        }
+                        turn++;
+                    }
+                    else if (choice == 'r')
+                    {
+                        if (get_piece_at_position(A.final) != nullptr)
+                        {
+                            kill(get_piece_at_position(A.final));
+                        }
+                        kill(moving);
+                        if (colour)
+                        {
+                            white.push_back(rook(name, A.final, 1));
+                        }
+                        else
+                        {
+                            black.push_back(rook(name, A.final, 0));
+                        }
+                        turn++;
+                    }
+                    else if (choice == 'k')
+                    {
+                        if (get_piece_at_position(A.final) != nullptr)
+                        {
+                            kill(get_piece_at_position(A.final));
+                        }
+                        kill(moving);
+                        if (colour)
+                        {
+                            white.push_back(knight(name, A.final, 1));
+                        }
+                        else
+                        {
+                            black.push_back(knight(name, A.final, 0));
+                        }
+                        turn++;
+                    }
+                    else if (choice == 'b')
+                    {
+                        if (get_piece_at_position(A.final) != nullptr)
+                        {
+                            kill(get_piece_at_position(A.final));
+                        }
+                        kill(moving);
+                        if (colour)
+                        {
+                            white.push_back(knight(name, A.final, 1));
+                        }
+                        else
+                        {
+                            black.push_back(knight(name, A.final, 0));
+                        }
+                        turn++;
+                    }
+                    continue;
+                }
+                make_move(A, colour);
+                turn++;
+            }
+        }
+        return turn;
+    }
+
+    void play_game(int turn)
+    {
         do
         {
             bool colour = turn % 2;
@@ -1166,6 +1282,7 @@ public:
                             name += second;
                             if (choice == 'q')
                             {
+                                input += 'q';
                                 if (get_piece_at_position(i.final) != nullptr)
                                 {
                                     kill(get_piece_at_position(i.final));
@@ -1183,6 +1300,7 @@ public:
                             }
                             else if (choice == 'r')
                             {
+                                input += 'r';
                                 if (get_piece_at_position(i.final) != nullptr)
                                 {
                                     kill(get_piece_at_position(i.final));
@@ -1200,6 +1318,7 @@ public:
                             }
                             else if (choice == 'k')
                             {
+                                input += 'k';
                                 if (get_piece_at_position(i.final) != nullptr)
                                 {
                                     kill(get_piece_at_position(i.final));
@@ -1217,6 +1336,7 @@ public:
                             }
                             else if (choice == 'b')
                             {
+                                input += 'b';
                                 if (get_piece_at_position(i.final) != nullptr)
                                 {
                                     kill(get_piece_at_position(i.final));
@@ -1235,6 +1355,7 @@ public:
                             continue;
                         }
                         make_move(A, colour);
+                        save_history(input);
                         turn++;
                         break;
                     }
@@ -1248,6 +1369,6 @@ public:
 int main()
 {
     game chess;
-    chess.reset_vectors();
-    chess.play_game();
+    int turn = chess.redo_history();
+    chess.play_game(turn);
 }
